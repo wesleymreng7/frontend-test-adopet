@@ -1,26 +1,40 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { useEffect, useState } from 'react';
+import { Button } from 'antd';
+import { BrowserRouter as Router, Route, Redirect } from 'react-router-dom';
 import './App.css';
+import Home from './pages/Home'
+import Login from './pages/Login'
+import { useAuthApi, apiKey } from './api'
 
 const App: React.FC = () => {
+  const { dataRequest, sessionRequest } = useAuthApi();
+  const requestToken = localStorage.getItem('requestToken');
+  const getInitAccessToken = async () => {
+    await sessionRequest({
+      system_api_key: apiKey
+    });
+  }
+  useEffect(() => {
+    if (!requestToken && !dataRequest.loading) {
+      getInitAccessToken();
+    }
+    if (!dataRequest.loading && dataRequest.data.data) {
+      localStorage.setItem('requestToken', dataRequest.data.data.access_key);
+    }
+  }, [dataRequest]);
+  
+  if (dataRequest.loading) {
+    return <h1>Loading Application...</h1>;
+  }
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <div>
+        <Route path="/" exact component={Home} />
+        <Route path="/login" exact component={Login} />
+      </div>
+    </Router>
   );
+
 }
 
 export default App;
